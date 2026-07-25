@@ -65,6 +65,22 @@
 
   #generateBtn{ font-size:0.95rem; padding:16px 24px; }
   #downloadNote{ display:none; margin-top:16px; }
+
+  .btn-row{ display:flex; gap:12px; flex-wrap:wrap; }
+  .btn-row button{ flex:1; min-width:220px; }
+  .btn-secondary{ background:transparent; color:var(--navy); border:2px solid var(--navy) !important; }
+  .btn-secondary:hover{ background:var(--navy); color:var(--paper); }
+  .gh-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; margin-bottom:6px; }
+  @media (max-width:640px){ .gh-grid{ grid-template-columns:1fr; } }
+  .gh-grid input{ margin-bottom:0; }
+  .gh-full{ grid-column:1/-1; }
+  .checkbox-row{ display:flex; align-items:center; gap:8px; margin:4px 0 18px; }
+  .checkbox-row input{ width:auto; margin:0; }
+  .checkbox-row label{ margin:0; text-transform:none; letter-spacing:0; font-family:'IBM Plex Sans',sans-serif; font-size:0.85rem; color:var(--ink); }
+  #ghStatus{ display:none; }
+  details.token-help{ margin:10px 0 20px; font-size:0.82rem; color:var(--navy-soft); }
+  details.token-help summary{ cursor:pointer; font-weight:500; color:var(--navy); }
+  details.token-help ol{ margin:10px 0 0; padding-left:20px; line-height:1.7; }
 </style>
 </head>
 <body>
@@ -112,8 +128,56 @@
       <div class="slot-grid" id="slotGrid"></div>
     </div>
 
-    <button id="generateBtn" class="full" disabled onclick="generateAndDownload()">Generate &amp; Download Updated Website</button>
-    <div id="downloadNote" class="status ok">Downloaded! Upload this new <span class="mono">index.html</span> to your hosting, replacing the old one, and your changes will go live for visitors.</div>
+    <div class="panel-box">
+      <h2>Publish</h2>
+      <p class="desc">Publish straight to your GitHub repo (auto-updates the live site via GitHub Pages), or download the file to upload yourself.</p>
+
+      <div class="gh-grid">
+        <div>
+          <label for="ghOwner">GitHub username / org</label>
+          <input type="text" id="ghOwner" placeholder="e.g. yourusername">
+        </div>
+        <div>
+          <label for="ghRepo">Repository name</label>
+          <input type="text" id="ghRepo" placeholder="e.g. bharatee-site">
+        </div>
+        <div>
+          <label for="ghBranch">Branch</label>
+          <input type="text" id="ghBranch" placeholder="main" value="main">
+        </div>
+        <div>
+          <label for="ghPath">File path in repo</label>
+          <input type="text" id="ghPath" placeholder="index.html" value="index.html">
+        </div>
+        <div class="gh-full">
+          <label for="ghToken">Personal Access Token</label>
+          <input type="password" id="ghToken" placeholder="paste your fine-grained token here" autocomplete="off">
+        </div>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="rememberToken">
+        <label for="rememberToken">Remember this token on this device only</label>
+      </div>
+
+      <details class="token-help">
+        <summary>How do I get a token?</summary>
+        <ol>
+          <li>On GitHub: Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token.</li>
+          <li>Under "Repository access", choose "Only select repositories" and pick just this one repo.</li>
+          <li>Under "Permissions", set <strong>Contents</strong> to <strong>Read and write</strong>. Leave everything else as No access.</li>
+          <li>Generate the token and copy it — GitHub only shows it once. Paste it above.</li>
+          <li>Treat it like a password. If it's ever exposed, revoke it from the same GitHub settings page.</li>
+        </ol>
+      </details>
+
+      <div id="ghStatus" class="status"></div>
+
+      <div class="btn-row">
+        <button id="publishBtn" disabled onclick="publishToGitHub()">Publish to GitHub</button>
+        <button id="generateBtn" class="btn-secondary" disabled onclick="generateAndDownload()">Download File Instead</button>
+      </div>
+      <div id="downloadNote" class="status ok">Downloaded! Upload this new <span class="mono">index.html</span> to your hosting, replacing the old one, and your changes will go live for visitors.</div>
+    </div>
   </div>
 
 </div>
@@ -150,6 +214,7 @@
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
       loadSite();
+      restoreGhSettings();
     } else {
       err.style.display = 'block';
     }
@@ -165,9 +230,10 @@
       siteDoc = parser.parseFromString(text, 'text/html');
       injectHelperStyles(siteDoc);
       populateSlotsFromDoc();
-      status.textContent = 'Loaded your current website. Make your changes below, then generate the updated file.';
+      status.textContent = 'Loaded your current website. Make your changes below, then publish.';
       status.className = 'status ok';
       document.getElementById('generateBtn').disabled = false;
+      document.getElementById('publishBtn').disabled = false;
     } catch(e){
       status.textContent = "Couldn't auto-load index.html — this happens when this admin page and index.html aren't hosted together, or you're opening files directly on your computer. Select your current website file below instead.";
       status.className = 'status warn';
@@ -187,6 +253,7 @@
       status.textContent = 'Website file loaded. Make your changes below.';
       status.className = 'status ok';
       document.getElementById('generateBtn').disabled = false;
+      document.getElementById('publishBtn').disabled = false;
     };
     reader.readAsText(file);
   }
@@ -270,6 +337,89 @@
       siteDoc.querySelectorAll('.brand img, .hero-logo-wrap img').forEach(function(el){
         el.setAttribute('src', pendingLogo);
       });
+    }
+  }
+
+  function restoreGhSettings(){
+    const owner = localStorage.getItem('gh_owner');
+    const repo = localStorage.getItem('gh_repo');
+    const branch = localStorage.getItem('gh_branch');
+    const path = localStorage.getItem('gh_path');
+    const token = localStorage.getItem('gh_token');
+    if(owner) document.getElementById('ghOwner').value = owner;
+    if(repo) document.getElementById('ghRepo').value = repo;
+    if(branch) document.getElementById('ghBranch').value = branch;
+    if(path) document.getElementById('ghPath').value = path;
+    if(token){ document.getElementById('ghToken').value = token; document.getElementById('rememberToken').checked = true; }
+  }
+
+  function utf8ToB64(str){
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+
+  async function publishToGitHub(){
+    const owner = document.getElementById('ghOwner').value.trim();
+    const repo = document.getElementById('ghRepo').value.trim();
+    const branch = document.getElementById('ghBranch').value.trim() || 'main';
+    const path = document.getElementById('ghPath').value.trim() || 'index.html';
+    const token = document.getElementById('ghToken').value.trim();
+    const statusEl = document.getElementById('ghStatus');
+    const remember = document.getElementById('rememberToken').checked;
+
+    statusEl.style.display = 'block';
+
+    if(!owner || !repo || !token){
+      statusEl.textContent = 'Please fill in repository owner, name, and token.';
+      statusEl.className = 'status warn';
+      return;
+    }
+    if(!siteDoc){
+      statusEl.textContent = 'Load the website first before publishing.';
+      statusEl.className = 'status warn';
+      return;
+    }
+
+    localStorage.setItem('gh_owner', owner);
+    localStorage.setItem('gh_repo', repo);
+    localStorage.setItem('gh_branch', branch);
+    localStorage.setItem('gh_path', path);
+    if(remember){ localStorage.setItem('gh_token', token); } else { localStorage.removeItem('gh_token'); }
+
+    applyChangesToDoc();
+    const htmlStr = '<!DOCTYPE html>\n' + siteDoc.documentElement.outerHTML;
+
+    statusEl.textContent = 'Publishing… contacting GitHub';
+    statusEl.className = 'status';
+
+    try{
+      const getRes = await fetch('https://api.github.com/repos/' + owner + '/' + repo + '/contents/' + path + '?ref=' + branch);
+      if(!getRes.ok) throw new Error('Could not find that file — check the username, repo name, branch and path.');
+      const getData = await getRes.json();
+      const sha = getData.sha;
+
+      const putRes = await fetch('https://api.github.com/repos/' + owner + '/' + repo + '/contents/' + path, {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Accept': 'application/vnd.github+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: 'Update site via admin panel',
+          content: utf8ToB64(htmlStr),
+          sha: sha,
+          branch: branch
+        })
+      });
+      if(!putRes.ok){
+        const errData = await putRes.json().catch(function(){ return {}; });
+        throw new Error(errData.message || 'GitHub rejected the update — check the token has Contents: Read and write permission on this repo.');
+      }
+      statusEl.textContent = 'Published! GitHub Pages usually takes 30–60 seconds to update the live site.';
+      statusEl.className = 'status ok';
+    } catch(e){
+      statusEl.textContent = 'Publish failed: ' + e.message;
+      statusEl.className = 'status warn';
     }
   }
 
