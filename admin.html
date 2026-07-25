@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BHARATEE DIGITAL SERVICE — Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0D2C6B; --navy-deep:#081E4D; --navy-soft:#3A5590;
+    --orange:#F26522; --amber:#F7941D; --paper:#FFFBF3; --ink:#14203D;
+    --line: rgba(13,44,107,0.16); --ok:#128807; --warn:#C1502E;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',sans-serif; }
+  h1,h2,h3{ font-family:'Baloo 2',sans-serif; font-weight:700; margin:0; color:var(--navy-deep); }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+  .wrap{ max-width:900px; margin:0 auto; padding:40px 24px 80px; }
+  .tri-rule{ height:4px; background:linear-gradient(90deg,#FF9933 0 33%,#fff 33% 66%,#128807 66% 100%); }
+
+  /* ---- login ---- */
+  #loginScreen{ max-width:380px; margin:80px auto; padding:36px; background:#fff; border:1px solid var(--line); border-radius:14px; }
+  #loginScreen h1{ font-size:1.5rem; margin-bottom:4px; }
+  #loginScreen p.sub{ color:var(--navy-soft); font-size:0.88rem; margin:0 0 24px; }
+  label{ display:block; font-family:'IBM Plex Mono',monospace; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--navy-soft); margin-bottom:6px; }
+  input[type=text], input[type=password]{
+    width:100%; padding:11px 12px; border:1.5px solid var(--line); border-radius:6px; font-size:0.95rem;
+    margin-bottom:18px; font-family:'IBM Plex Sans',sans-serif;
+  }
+  input[type=text]:focus, input[type=password]:focus{ outline:2px solid var(--orange); border-color:var(--orange); }
+  button{
+    font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:0.85rem;
+    background:var(--navy); color:var(--paper); border:none; padding:12px 20px; border-radius:6px;
+    cursor:pointer; transition:background 0.2s ease;
+  }
+  button:hover{ background:var(--orange); }
+  button:disabled{ background:#c9c2b2; cursor:not-allowed; }
+  .full{ width:100%; }
+  #loginError{ display:none; color:var(--warn); font-size:0.85rem; margin-bottom:14px; }
+  .fine-note{ font-size:0.76rem; color:var(--navy-soft); line-height:1.5; margin-top:18px; border-top:1px solid var(--line); padding-top:14px; }
+
+  /* ---- dashboard ---- */
+  #dashboard{ display:none; }
+  .status{ padding:14px 16px; border-radius:8px; font-size:0.88rem; margin-bottom:24px; }
+  .status.ok{ background:rgba(18,136,7,0.1); color:var(--ok); border:1px solid rgba(18,136,7,0.3); }
+  .status.warn{ background:rgba(193,80,46,0.1); color:var(--warn); border:1px solid rgba(193,80,46,0.3); }
+  .panel-box{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:28px; margin-bottom:24px; }
+  .panel-box h2{ font-size:1.15rem; margin-bottom:6px; }
+  .panel-box p.desc{ color:var(--navy-soft); font-size:0.87rem; margin:0 0 20px; }
+
+  .slot-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+  @media (max-width:640px){ .slot-grid{ grid-template-columns:1fr; } }
+  .slot-card{ border:1px solid var(--line); border-radius:10px; padding:16px; display:flex; gap:14px; }
+  .slot-thumb{ width:80px; height:100px; border-radius:6px; background:var(--paper); border:1px solid var(--line); object-fit:cover; flex-shrink:0; display:none; }
+  .slot-body{ flex-grow:1; }
+  .slot-body input[type=text]{ margin-bottom:10px; padding:8px 10px; font-size:0.85rem; }
+  .slot-body input[type=file]{ font-size:0.78rem; }
+
+  .logo-row{ display:flex; align-items:center; gap:16px; }
+  #logoThumb{ width:64px; height:auto; display:none; }
+
+  #manualUploadWrap{ display:none; margin-top:14px; }
+
+  #generateBtn{ font-size:0.95rem; padding:16px 24px; }
+  #downloadNote{ display:none; margin-top:16px; }
+</style>
+</head>
+<body>
+
+<div class="tri-rule"></div>
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <div id="loginScreen">
+    <h1>Admin Panel</h1>
+    <p class="sub mono">BHARATEE DIGITAL SERVICE</p>
+    <div id="loginError">Incorrect ID or password.</div>
+    <label for="loginId">Admin ID</label>
+    <input type="text" id="loginId" autocomplete="off">
+    <label for="loginPw">Password</label>
+    <input type="password" id="loginPw" autocomplete="off">
+    <button class="full" onclick="login()">Log In</button>
+    <p class="fine-note">This login only lives inside this page's code — it keeps casual visitors out, but it is not real server-side security. Don't rely on it to protect sensitive data.</p>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+    <h1 style="margin-bottom:6px;">Website Photo Editor</h1>
+    <p class="mono" style="color:var(--navy-soft); font-size:0.82rem; margin-bottom:24px;">Edit gallery photos below, then generate an updated file to upload to your hosting.</p>
+
+    <div id="loadStatus" class="status">Loading your current website…</div>
+
+    <div id="manualUploadWrap">
+      <label for="manualFile">Couldn't auto-load — select your current index.html file instead</label>
+      <input type="file" id="manualFile" accept=".html" onchange="manualLoad(this.files[0])">
+    </div>
+
+    <div class="panel-box">
+      <h2>Logo</h2>
+      <p class="desc">Replace the logo used in the header, hero and footer.</p>
+      <div class="logo-row">
+        <img id="logoThumb" alt="current logo">
+        <input type="file" accept="image/*" onchange="handleLogoUpload(this.files[0])">
+      </div>
+    </div>
+
+    <div class="panel-box">
+      <h2>Studio Work Gallery</h2>
+      <p class="desc">Upload a real photo for any tile and edit its caption. Leave a slot alone to keep it as-is.</p>
+      <div class="slot-grid" id="slotGrid"></div>
+    </div>
+
+    <button id="generateBtn" class="full" disabled onclick="generateAndDownload()">Generate &amp; Download Updated Website</button>
+    <div id="downloadNote" class="status ok">Downloaded! Upload this new <span class="mono">index.html</span> to your hosting, replacing the old one, and your changes will go live for visitors.</div>
+  </div>
+
+</div>
+
+<script>
+  const CREDENTIALS = { id: '79784847196', password: 'Bharatee@2001' };
+  let siteDoc = null;
+  let pendingPhotos = {};
+  let pendingLogo = null;
+  const defaultCaptions = {
+    1:'Portrait — Studio Light', 2:'Passport — Same Day', 3:'Event — Reception', 4:'Family — Group Sitting',
+    5:'ID — Document Set', 6:'Outdoor — Natural Light', 7:'Studio — Backdrop Roll', 8:'Restoration — Reprint'
+  };
+
+  // build the 8 slot cards
+  const slotGrid = document.getElementById('slotGrid');
+  for(let i=1;i<=8;i++){
+    const card = document.createElement('div');
+    card.className = 'slot-card';
+    card.innerHTML = `
+      <img class="slot-thumb" id="thumb${i}" alt="slot ${i} preview">
+      <div class="slot-body">
+        <input type="text" id="caption${i}" value="${defaultCaptions[i]}">
+        <input type="file" accept="image/*" onchange="handlePhotoUpload(${i}, this.files[0])">
+      </div>`;
+    slotGrid.appendChild(card);
+  }
+
+  function login(){
+    const idVal = document.getElementById('loginId').value.trim();
+    const pwVal = document.getElementById('loginPw').value;
+    const err = document.getElementById('loginError');
+    if(idVal === CREDENTIALS.id && pwVal === CREDENTIALS.password){
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadSite();
+    } else {
+      err.style.display = 'block';
+    }
+  }
+
+  async function loadSite(){
+    const status = document.getElementById('loadStatus');
+    try{
+      const res = await fetch('index.html', { cache:'no-store' });
+      if(!res.ok) throw new Error('not ok');
+      const text = await res.text();
+      const parser = new DOMParser();
+      siteDoc = parser.parseFromString(text, 'text/html');
+      injectHelperStyles(siteDoc);
+      populateSlotsFromDoc();
+      status.textContent = 'Loaded your current website. Make your changes below, then generate the updated file.';
+      status.className = 'status ok';
+      document.getElementById('generateBtn').disabled = false;
+    } catch(e){
+      status.textContent = "Couldn't auto-load index.html — this happens when this admin page and index.html aren't hosted together, or you're opening files directly on your computer. Select your current website file below instead.";
+      status.className = 'status warn';
+      document.getElementById('manualUploadWrap').style.display = 'block';
+    }
+  }
+
+  function manualLoad(file){
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(){
+      const parser = new DOMParser();
+      siteDoc = parser.parseFromString(reader.result, 'text/html');
+      injectHelperStyles(siteDoc);
+      populateSlotsFromDoc();
+      const status = document.getElementById('loadStatus');
+      status.textContent = 'Website file loaded. Make your changes below.';
+      status.className = 'status ok';
+      document.getElementById('generateBtn').disabled = false;
+    };
+    reader.readAsText(file);
+  }
+
+  function injectHelperStyles(doc){
+    if(doc.getElementById('admin-helper-styles')) return;
+    const style = doc.createElement('style');
+    style.id = 'admin-helper-styles';
+    style.textContent = '.frame-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;} .frame-scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.55) 100%);pointer-events:none;}';
+    doc.head.appendChild(style);
+  }
+
+  function populateSlotsFromDoc(){
+    for(let i=1;i<=8;i++){
+      const frame = siteDoc.querySelector('.frame.f'+i);
+      if(!frame) continue;
+      const span = frame.querySelector('span');
+      const captionInput = document.getElementById('caption'+i);
+      if(captionInput && span && span.textContent.trim()) captionInput.value = span.textContent.trim();
+      const existingImg = frame.querySelector('img.frame-photo');
+      const thumb = document.getElementById('thumb'+i);
+      if(existingImg && thumb){ thumb.src = existingImg.getAttribute('src'); thumb.style.display = 'block'; }
+    }
+    const logoImg = siteDoc.querySelector('.brand img');
+    if(logoImg){
+      const logoThumb = document.getElementById('logoThumb');
+      logoThumb.src = logoImg.getAttribute('src');
+      logoThumb.style.display = 'block';
+    }
+  }
+
+  function handlePhotoUpload(slot, file){
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(){
+      pendingPhotos[slot] = reader.result;
+      const thumb = document.getElementById('thumb'+slot);
+      thumb.src = reader.result;
+      thumb.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleLogoUpload(file){
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(){
+      pendingLogo = reader.result;
+      const thumb = document.getElementById('logoThumb');
+      thumb.src = reader.result;
+      thumb.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function applyChangesToDoc(){
+    for(let i=1;i<=8;i++){
+      const frame = siteDoc.querySelector('.frame.f'+i);
+      if(!frame) continue;
+      const span = frame.querySelector('span');
+      const captionInput = document.getElementById('caption'+i);
+      if(captionInput && span) span.textContent = captionInput.value;
+      if(pendingPhotos[i]){
+        let img = frame.querySelector('img.frame-photo');
+        let scrim = frame.querySelector('.frame-scrim');
+        if(!img){
+          img = siteDoc.createElement('img');
+          img.className = 'frame-photo';
+          frame.insertBefore(img, span);
+        }
+        img.setAttribute('src', pendingPhotos[i]);
+        img.setAttribute('alt', captionInput ? captionInput.value : '');
+        if(!scrim){
+          scrim = siteDoc.createElement('div');
+          scrim.className = 'frame-scrim';
+          frame.insertBefore(scrim, span);
+        }
+      }
+    }
+    if(pendingLogo){
+      siteDoc.querySelectorAll('.brand img, .hero-logo-wrap img').forEach(function(el){
+        el.setAttribute('src', pendingLogo);
+      });
+    }
+  }
+
+  function generateAndDownload(){
+    if(!siteDoc) return;
+    applyChangesToDoc();
+    const htmlStr = '<!DOCTYPE html>\n' + siteDoc.documentElement.outerHTML;
+    const blob = new Blob([htmlStr], { type:'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'index.html';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    document.getElementById('downloadNote').style.display = 'block';
+  }
+</script>
+
+</body>
+</html>
