@@ -99,9 +99,9 @@ begin
     and o.status <> 'cancelled';
 
   select
-    coalesce(sum(pt.amount) filter (where pt.entry_type = 'receipt'), 0),
-    coalesce(sum(pt.amount) filter (where pt.entry_type = 'refund'), 0),
-    coalesce(jsonb_object_agg(method_name, method_values), '{}'::jsonb)
+    totals.receipts,
+    totals.refunds,
+    coalesce(jsonb_object_agg(methods.method_name, methods.method_values), '{}'::jsonb)
   into v_receipts, v_refunds, v_receipts_by_method
   from (
     select
@@ -126,7 +126,8 @@ begin
     where pt.business_id = p_business_id
       and pt.transaction_at >= p_period_start
       and pt.transaction_at < p_period_end
-  ) totals;
+  ) totals
+  group by totals.receipts, totals.refunds;
 
   select coalesce(jsonb_object_agg(method_name, method_total), '{}'::jsonb),
          coalesce(sum(method_total), 0)
