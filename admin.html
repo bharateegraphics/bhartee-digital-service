@@ -1,444 +1,66 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BHARATEE DIGITAL SERVICE — Admin Panel</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0D2C6B"><title>BHARATEE Business Platform | Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root{
-    --navy:#0D2C6B; --navy-deep:#081E4D; --navy-soft:#3A5590;
-    --orange:#F26522; --amber:#F7941D; --paper:#FFFBF3; --ink:#14203D;
-    --line: rgba(13,44,107,0.16); --ok:#128807; --warn:#C1502E;
-  }
-  *{box-sizing:border-box;}
-  body{ margin:0; background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',sans-serif; }
-  h1,h2,h3{ font-family:'Baloo 2',sans-serif; font-weight:700; margin:0; color:var(--navy-deep); }
-  .mono{ font-family:'IBM Plex Mono',monospace; }
-  .wrap{ max-width:900px; margin:0 auto; padding:40px 24px 80px; }
-  .tri-rule{ height:4px; background:linear-gradient(90deg,#FF9933 0 33%,#fff 33% 66%,#128807 66% 100%); }
-
-  /* ---- login ---- */
-  #loginScreen{ max-width:380px; margin:80px auto; padding:36px; background:#fff; border:1px solid var(--line); border-radius:14px; }
-  #loginScreen h1{ font-size:1.5rem; margin-bottom:4px; }
-  #loginScreen p.sub{ color:var(--navy-soft); font-size:0.88rem; margin:0 0 24px; }
-  label{ display:block; font-family:'IBM Plex Mono',monospace; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--navy-soft); margin-bottom:6px; }
-  input[type=text], input[type=password]{
-    width:100%; padding:11px 12px; border:1.5px solid var(--line); border-radius:6px; font-size:0.95rem;
-    margin-bottom:18px; font-family:'IBM Plex Sans',sans-serif;
-  }
-  input[type=text]:focus, input[type=password]:focus{ outline:2px solid var(--orange); border-color:var(--orange); }
-  button{
-    font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:0.85rem;
-    background:var(--navy); color:var(--paper); border:none; padding:12px 20px; border-radius:6px;
-    cursor:pointer; transition:background 0.2s ease;
-  }
-  button:hover{ background:var(--orange); }
-  button:disabled{ background:#c9c2b2; cursor:not-allowed; }
-  .full{ width:100%; }
-  #loginError{ display:none; color:var(--warn); font-size:0.85rem; margin-bottom:14px; }
-  .fine-note{ font-size:0.76rem; color:var(--navy-soft); line-height:1.5; margin-top:18px; border-top:1px solid var(--line); padding-top:14px; }
-
-  /* ---- dashboard ---- */
-  #dashboard{ display:none; }
-  .status{ padding:14px 16px; border-radius:8px; font-size:0.88rem; margin-bottom:24px; }
-  .status.ok{ background:rgba(18,136,7,0.1); color:var(--ok); border:1px solid rgba(18,136,7,0.3); }
-  .status.warn{ background:rgba(193,80,46,0.1); color:var(--warn); border:1px solid rgba(193,80,46,0.3); }
-  .panel-box{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:28px; margin-bottom:24px; }
-  .panel-box h2{ font-size:1.15rem; margin-bottom:6px; }
-  .panel-box p.desc{ color:var(--navy-soft); font-size:0.87rem; margin:0 0 20px; }
-
-  .slot-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
-  @media (max-width:640px){ .slot-grid{ grid-template-columns:1fr; } }
-  .slot-card{ border:1px solid var(--line); border-radius:10px; padding:16px; display:flex; gap:14px; }
-  .slot-thumb{ width:80px; height:100px; border-radius:6px; background:var(--paper); border:1px solid var(--line); object-fit:cover; flex-shrink:0; display:none; }
-  .slot-body{ flex-grow:1; }
-  .slot-body input[type=text]{ margin-bottom:10px; padding:8px 10px; font-size:0.85rem; }
-  .slot-body input[type=file]{ font-size:0.78rem; }
-
-  .logo-row{ display:flex; align-items:center; gap:16px; }
-  #logoThumb{ width:64px; height:auto; display:none; }
-
-  #manualUploadWrap{ display:none; margin-top:14px; }
-
-  #generateBtn{ font-size:0.95rem; padding:16px 24px; }
-  #downloadNote{ display:none; margin-top:16px; }
-
-  .btn-row{ display:flex; gap:12px; flex-wrap:wrap; }
-  .btn-row button{ flex:1; min-width:220px; }
-  .btn-secondary{ background:transparent; color:var(--navy); border:2px solid var(--navy) !important; }
-  .btn-secondary:hover{ background:var(--navy); color:var(--paper); }
-  .gh-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; margin-bottom:6px; }
-  @media (max-width:640px){ .gh-grid{ grid-template-columns:1fr; } }
-  .gh-grid input{ margin-bottom:0; }
-  .gh-full{ grid-column:1/-1; }
-  .checkbox-row{ display:flex; align-items:center; gap:8px; margin:4px 0 18px; }
-  .checkbox-row input{ width:auto; margin:0; }
-  .checkbox-row label{ margin:0; text-transform:none; letter-spacing:0; font-family:'IBM Plex Sans',sans-serif; font-size:0.85rem; color:var(--ink); }
-  #ghStatus{ display:none; }
-  details.token-help{ margin:10px 0 20px; font-size:0.82rem; color:var(--navy-soft); }
-  details.token-help summary{ cursor:pointer; font-weight:500; color:var(--navy); }
-  details.token-help ol{ margin:10px 0 0; padding-left:20px; line-height:1.7; }
+:root{--navy:#0D2C6B;--deep:#081E4D;--soft:#3A5590;--orange:#F26522;--paper:#FFFBF3;--ink:#14203D;--line:rgba(13,44,107,.16);--ok:#128807;--muted:#6C7895}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif}.tri{height:5px;background:linear-gradient(90deg,#FF9933 0 33.33%,#fff 33.33% 66.66%,#128807 66.66%)}header{height:74px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,5vw,64px)}.brand{display:flex;align-items:center;gap:12px}.mark{width:42px;height:42px;display:grid;place-items:center;border-radius:10px;background:var(--navy);color:white;box-shadow:inset 0 -4px var(--orange);font:800 25px 'Baloo 2'}.brand strong{display:block;color:var(--deep);font:800 16px 'Baloo 2';letter-spacing:.08em}.brand small{display:block;color:var(--soft);font:500 9px 'IBM Plex Mono';letter-spacing:.12em}.right{display:flex;align-items:center;gap:18px}.secure{font:500 10px 'IBM Plex Mono';color:var(--soft)}select{padding:8px;border:1px solid var(--line);border-radius:7px;background:white;color:var(--navy)}main{width:min(1100px,calc(100% - 32px));min-height:calc(100vh - 130px);margin:auto;padding:55px 0 70px}.login{display:grid;grid-template-columns:1fr 430px;gap:clamp(30px,7vw,90px);align-items:center;max-width:1000px;margin:15px auto}.eyebrow{margin:0 0 12px;color:var(--orange);font:600 10px 'IBM Plex Mono';letter-spacing:.15em}h1,h2,h3{margin:0;color:var(--deep);font-family:'Baloo 2';line-height:1.12}.intro h1{font-size:clamp(42px,5vw,62px)}.intro p.copy{max-width:450px;color:var(--soft);line-height:1.7;margin:18px 0 28px}.preview{display:grid;gap:11px;max-width:450px}.preview div{display:flex;align-items:center;gap:13px;padding:14px;background:white;border:1px solid var(--line);border-radius:10px}.badge{width:42px;height:42px;border-radius:9px;display:grid;place-items:center;background:var(--navy);color:#fff;font:600 11px 'IBM Plex Mono'}.badge.orange{background:var(--orange)}.preview strong{display:block;font:700 11px 'IBM Plex Mono';color:var(--deep)}.preview small{display:block;margin-top:4px;color:var(--muted);font-size:11px}.fine{color:var(--muted);font-size:11px;line-height:1.6;margin-top:22px}.card{background:white;border:1px solid var(--line);border-radius:15px;padding:clamp(24px,4vw,38px);box-shadow:0 18px 50px rgba(8,30,77,.07)}.card h2{font-size:31px;margin-bottom:7px}.sub{font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 20px}label{display:block;margin:16px 0 6px;color:var(--soft);font:600 10px 'IBM Plex Mono';letter-spacing:.1em;text-transform:uppercase}input{width:100%;height:46px;border:1px solid rgba(13,44,107,.22);border-radius:7px;padding:10px 12px;font:14px 'IBM Plex Sans';outline:none}input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(242,101,34,.1)}button{cursor:pointer;font:600 11px 'IBM Plex Mono';border-radius:7px}.primary{width:100%;min-height:45px;margin-top:21px;border:0;background:var(--navy);color:#fff;padding:12px}.primary:hover{background:var(--orange)}button:disabled{opacity:.55;cursor:wait}.textbtn{display:block;margin:15px auto 0;border:0;background:none;color:var(--navy);padding:5px}.textbtn:hover{color:var(--orange);text-decoration:underline}.message{padding:11px 13px;border-radius:8px;margin:0 0 14px;font-size:12px;line-height:1.5}.error{background:#fff1ed;border:1px solid #f0c2b5;color:#8b321a}.success{background:#eff8ef;border:1px solid #c2e3c0;color:#176b11}.hidden{display:none!important}.hint{border-top:1px solid var(--line);padding-top:15px;margin-top:19px;font-size:11px;line-height:1.5;color:var(--muted)}.dash{max-width:1050px;margin:auto}.dashhead{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:32px}.dashhead h1{font-size:42px;margin-bottom:7px}.muted{color:var(--muted);font-size:12px;line-height:1.6}.outline{background:transparent;color:var(--navy);border:1px solid var(--line);padding:11px 16px}.outline:hover{background:#f3f6fc}.sectionhead{display:flex;justify-content:space-between;align-items:end;gap:15px;margin-bottom:15px}.sectionhead h2{font-size:25px}.sectionhead small{font:500 9px 'IBM Plex Mono';color:var(--muted)}.businesses{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.business{width:100%;display:flex;align-items:center;gap:13px;text-align:left;padding:17px;background:white;border:1px solid var(--line);border-radius:11px}.business:hover,.business[aria-pressed=true]{border-color:var(--orange)}.business .bname{display:block;color:var(--deep);font:700 11px 'IBM Plex Mono'}.business .role{display:block;color:var(--muted);font-size:10px;margin-top:5px}.arrow{margin-left:auto;color:var(--orange);font-size:19px}.selected{margin-top:28px;padding:23px;background:white;border:1px solid var(--line);border-radius:13px}.selectedtop{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:20px}.selected h2{font-size:27px}.modules{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}.module{padding:14px;border:1px solid var(--line);border-radius:9px;background:#fffdfa}.module b{font:600 9px 'IBM Plex Mono';color:var(--orange)}.module h3{font-size:17px;margin:8px 0 5px}.module p{min-height:44px;color:var(--muted);font-size:10px;line-height:1.5;margin:0 0 10px}.module small{font:500 9px 'IBM Plex Mono';color:var(--soft)}footer{border-top:1px solid var(--line);padding:15px clamp(16px,5vw,64px);display:flex;justify-content:space-between;gap:10px;color:var(--muted);font:500 9px 'IBM Plex Mono';letter-spacing:.04em}@media(max-width:800px){.login{grid-template-columns:1fr;max-width:500px;gap:25px;margin:0 auto}.intro h1{font-size:46px}.modules{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){header{height:65px}.secure{display:none}main{padding:32px 0 45px}.card{padding:23px 19px}.dashhead,.selectedtop,.sectionhead{align-items:flex-start;flex-direction:column}.businesses{grid-template-columns:1fr}footer{flex-direction:column}}
 </style>
 </head>
 <body>
-
-<div class="tri-rule"></div>
-<div class="wrap">
-
-  <!-- LOGIN -->
-  <div id="loginScreen">
-    <h1>Admin Panel</h1>
-    <p class="sub mono">BHARATEE DIGITAL SERVICE</p>
-    <div id="loginError">Incorrect ID or password.</div>
-    <label for="loginId">Admin ID</label>
-    <input type="text" id="loginId" autocomplete="off">
-    <label for="loginPw">Password</label>
-    <input type="password" id="loginPw" autocomplete="off">
-    <button class="full" onclick="login()">Log In</button>
-    <p class="fine-note">This login only lives inside this page's code — it keeps casual visitors out, but it is not real server-side security. Don't rely on it to protect sensitive data.</p>
-  </div>
-
-  <!-- DASHBOARD -->
-  <div id="dashboard">
-    <h1 style="margin-bottom:6px;">Website Photo Editor</h1>
-    <p class="mono" style="color:var(--navy-soft); font-size:0.82rem; margin-bottom:24px;">Edit gallery photos below, then generate an updated file to upload to your hosting.</p>
-
-    <div id="loadStatus" class="status">Loading your current website…</div>
-
-    <div id="manualUploadWrap">
-      <label for="manualFile">Couldn't auto-load — select your current index.html file instead</label>
-      <input type="file" id="manualFile" accept=".html" onchange="manualLoad(this.files[0])">
-    </div>
-
-    <div class="panel-box">
-      <h2>Logo</h2>
-      <p class="desc">Replace the logo used in the header, hero and footer.</p>
-      <div class="logo-row">
-        <img id="logoThumb" alt="current logo">
-        <input type="file" accept="image/*" onchange="handleLogoUpload(this.files[0])">
-      </div>
-    </div>
-
-    <div class="panel-box">
-      <h2>Studio Work Gallery</h2>
-      <p class="desc">Upload a real photo for any tile and edit its caption. Leave a slot alone to keep it as-is.</p>
-      <div class="slot-grid" id="slotGrid"></div>
-    </div>
-
-    <div class="panel-box">
-      <h2>Publish</h2>
-      <p class="desc">Publish straight to your GitHub repo (auto-updates the live site via GitHub Pages), or download the file to upload yourself.</p>
-
-      <div class="gh-grid">
-        <div>
-          <label for="ghOwner">GitHub username / org</label>
-          <input type="text" id="ghOwner" placeholder="e.g. yourusername" value="bharateegraphics">
-        </div>
-        <div>
-          <label for="ghRepo">Repository name</label>
-          <input type="text" id="ghRepo" placeholder="e.g. bharatee-site" value="bhartee-digital-service">
-        </div>
-        <div>
-          <label for="ghBranch">Branch</label>
-          <input type="text" id="ghBranch" placeholder="main" value="main">
-        </div>
-        <div>
-          <label for="ghPath">File path in repo</label>
-          <input type="text" id="ghPath" placeholder="index.html" value="index.html">
-        </div>
-        <div class="gh-full">
-          <label for="ghToken">Personal Access Token</label>
-          <input type="password" id="ghToken" placeholder="paste your fine-grained token here" autocomplete="off">
-        </div>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="rememberToken">
-        <label for="rememberToken">Remember this token on this device only</label>
-      </div>
-
-      <details class="token-help">
-        <summary>How do I get a token?</summary>
-        <ol>
-          <li>On GitHub: Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token.</li>
-          <li>Under "Repository access", choose "Only select repositories" and pick just this one repo.</li>
-          <li>Under "Permissions", set <strong>Contents</strong> to <strong>Read and write</strong>. Leave everything else as No access.</li>
-          <li>Generate the token and copy it — GitHub only shows it once. Paste it above.</li>
-          <li>Treat it like a password. If it's ever exposed, revoke it from the same GitHub settings page.</li>
-        </ol>
-      </details>
-
-      <div id="ghStatus" class="status"></div>
-
-      <div class="btn-row">
-        <button id="publishBtn" disabled onclick="publishToGitHub()">Publish to GitHub</button>
-        <button id="generateBtn" class="btn-secondary" disabled onclick="generateAndDownload()">Download File Instead</button>
-      </div>
-      <div id="downloadNote" class="status ok">Downloaded! Upload this new <span class="mono">index.html</span> to your hosting, replacing the old one, and your changes will go live for visitors.</div>
-    </div>
-  </div>
-
-</div>
-
+<div class="tri"></div>
+<header><a class="brand" href="./"><span class="mark">B</span><span><strong>BHARATEE</strong><small>BUSINESS PLATFORM</small></span></a><div class="right"><span class="secure" id="secureText">SECURE ADMIN ACCESS</span><select id="lang" aria-label="Language"><option value="en">English</option><option value="hi">हिन्दी</option><option value="or">ଓଡ଼ିଆ</option></select></div></header>
+<main>
+<section id="configWarning" class="card hidden"><h2>Configuration required</h2><p class="sub">Edit the Supabase URL and Publishable Key placeholders near the bottom of this file. Use only the Publishable (or legacy anon) key. Never paste a Secret or service_role key into this page.</p></section>
+<section id="loginView" class="login">
+  <div class="intro"><p class="eyebrow" data-k="workspace">ADMIN WORKSPACE</p><h1 data-k="headline">One platform.<br>Two businesses.</h1><p class="copy" data-k="intro">Manage BHARATEE DIGITAL SERVICE and BHARATEE GRAPHIX from one secure workspace.</p><div class="preview"><div><span class="badge">DS</span><span><strong>BHARATEE DIGITAL SERVICE</strong><small data-k="digitalTag">Cyber Café · Digital Services</small></span></div><div><span class="badge orange">BG</span><span><strong>BHARATEE GRAPHIX</strong><small data-k="graphixTag">Photography · Videography · Albums</small></span></div></div><p class="fine" data-k="preserve">Your existing website content and branding remain unchanged.</p></div>
+  <div class="card"><p class="eyebrow" data-k="access">OWNER & STAFF ACCESS</p><h2 data-k="signin">Sign in</h2><p class="sub" data-k="signinSub">Use the email address invited to your business workspace.</p><div id="loginMessage" class="message hidden"></div><form id="loginForm"><label for="email" data-k="email">Email address</label><input id="email" type="email" autocomplete="username" required><label for="password" data-k="password">Password</label><input id="password" type="password" autocomplete="current-password" required><button id="loginButton" class="primary" type="submit" data-k="signinBtn">Sign in securely →</button></form><button id="forgotBtn" class="textbtn" type="button" data-k="forgot">Forgot password?</button><p class="hint" data-k="inviteOnly">Access is invitation-only. Public registration is disabled.</p></div>
+</section>
+<section id="recoveryView" class="card hidden" style="max-width:470px;margin:35px auto"><p class="eyebrow">ACCOUNT RECOVERY</p><h2 data-k="reset">Reset your password</h2><p class="sub" data-k="resetSub">Enter your email and we will send a password reset link.</p><div id="recoveryMessage" class="message hidden"></div><form id="recoveryForm"><label for="recoveryEmail" data-k="email">Email address</label><input id="recoveryEmail" type="email" required><button id="sendReset" class="primary" type="submit" data-k="sendReset">Send reset link</button></form><button id="backBtn" class="textbtn" data-k="back" type="button">Back to login</button></section>
+<section id="newPasswordView" class="card hidden" style="max-width:470px;margin:35px auto"><p class="eyebrow">ACCOUNT RECOVERY</p><h2 data-k="newPass">Choose a new password</h2><p class="sub" data-k="newPassSub">Use at least 10 characters.</p><div id="newPasswordMessage" class="message hidden"></div><form id="newPasswordForm"><label for="newPassword" data-k="newPass">New password</label><input id="newPassword" type="password" minlength="10" required><label for="confirmPassword" data-k="confirm">Confirm password</label><input id="confirmPassword" type="password" minlength="10" required><button id="savePass" class="primary" type="submit" data-k="savePass">Save new password</button></form></section>
+<section id="dashboardView" class="dash hidden"><div class="dashhead"><div><p class="eyebrow" data-k="overview">WORKSPACE OVERVIEW</p><h1 id="welcome">Welcome</h1><p class="muted" data-k="choose">Choose a business to manage its operations.</p></div><button id="logout" class="outline" type="button" data-k="logout">Sign out</button></div><div id="dashMessage" class="message hidden"></div><div class="sectionhead"><h2 data-k="yourBusinesses">Your businesses</h2><small data-k="assignedOnly">ONLY ASSIGNED BUSINESSES ARE SHOWN</small></div><div id="businessGrid" class="businesses"></div><section id="selectedPanel" class="selected hidden"><div class="selectedtop"><div><p class="eyebrow" data-k="selected">SELECTED WORKSPACE</p><h2 id="selectedName"></h2><p id="selectedRole" class="muted"></p></div><button id="switchBusiness" class="outline" type="button" data-k="changeBusiness">Change business</button></div><div class="modules"><article class="module"><b>01</b><h3 data-k="customers">Customers</h3><p data-k="customersSub">Customer directory and enquiry history.</p><small data-k="next">NEXT BUILD</small></article><article class="module"><b>02</b><h3 data-k="orders">Orders & bookings</h3><p data-k="ordersSub">Counter jobs, studio enquiries and event bookings.</p><small data-k="next">NEXT BUILD</small></article><article class="module"><b>03</b><h3 data-k="finance">Income & expenses</h3><p data-k="financeSub">Receipts, refunds, expenses and cashbook.</p><small data-k="next">NEXT BUILD</small></article><article class="module"><b>04</b><h3 data-k="cms">Website CMS</h3><p data-k="cmsSub">Manage public content, services, prices and gallery.</p><small data-k="next">NEXT BUILD</small></article></div></section><p class="fine" data-k="staged">Secure sign-in and business access are connected. Business modules will be enabled in staged releases.</p></section>
+</main>
+<footer><span>BHARATEE DIGITAL SERVICE · BHARATEE GRAPHIX</span><span data-k="private">PRIVATE BUSINESS WORKSPACE</span></footer>
 <script>
-  const CREDENTIALS = { id: '79784847196', password: 'Bharatee@2001' };
-  let siteDoc = null;
-  let pendingPhotos = {};
-  let pendingLogo = null;
-  const defaultCaptions = {
-    1:'Portrait — Studio Light', 2:'Passport — Same Day', 3:'Event — Reception', 4:'Family — Group Sitting',
-    5:'ID — Document Set', 6:'Outdoor — Natural Light', 7:'Studio — Backdrop Roll', 8:'Restoration — Reprint'
-  };
-
-  // build the 8 slot cards
-  const slotGrid = document.getElementById('slotGrid');
-  for(let i=1;i<=8;i++){
-    const card = document.createElement('div');
-    card.className = 'slot-card';
-    card.innerHTML = `
-      <img class="slot-thumb" id="thumb${i}" alt="slot ${i} preview">
-      <div class="slot-body">
-        <input type="text" id="caption${i}" value="${defaultCaptions[i]}">
-        <input type="file" accept="image/*" onchange="handlePhotoUpload(${i}, this.files[0])">
-      </div>`;
-    slotGrid.appendChild(card);
-  }
-
-  function login(){
-    const idVal = document.getElementById('loginId').value.trim();
-    const pwVal = document.getElementById('loginPw').value;
-    const err = document.getElementById('loginError');
-    if(idVal === CREDENTIALS.id && pwVal === CREDENTIALS.password){
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      loadSite();
-      restoreGhSettings();
-    } else {
-      err.style.display = 'block';
-    }
-  }
-
-  async function loadSite(){
-    const status = document.getElementById('loadStatus');
-    try{
-      const res = await fetch('index.html', { cache:'no-store' });
-      if(!res.ok) throw new Error('not ok');
-      const text = await res.text();
-      const parser = new DOMParser();
-      siteDoc = parser.parseFromString(text, 'text/html');
-      injectHelperStyles(siteDoc);
-      populateSlotsFromDoc();
-      status.textContent = 'Loaded your current website. Make your changes below, then publish.';
-      status.className = 'status ok';
-      document.getElementById('generateBtn').disabled = false;
-      document.getElementById('publishBtn').disabled = false;
-    } catch(e){
-      status.textContent = "Couldn't auto-load index.html — this happens when this admin page and index.html aren't hosted together, or you're opening files directly on your computer. Select your current website file below instead.";
-      status.className = 'status warn';
-      document.getElementById('manualUploadWrap').style.display = 'block';
-    }
-  }
-
-  function manualLoad(file){
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = function(){
-      const parser = new DOMParser();
-      siteDoc = parser.parseFromString(reader.result, 'text/html');
-      injectHelperStyles(siteDoc);
-      populateSlotsFromDoc();
-      const status = document.getElementById('loadStatus');
-      status.textContent = 'Website file loaded. Make your changes below.';
-      status.className = 'status ok';
-      document.getElementById('generateBtn').disabled = false;
-      document.getElementById('publishBtn').disabled = false;
-    };
-    reader.readAsText(file);
-  }
-
-  function injectHelperStyles(doc){
-    if(doc.getElementById('admin-helper-styles')) return;
-    const style = doc.createElement('style');
-    style.id = 'admin-helper-styles';
-    style.textContent = '.frame-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;} .frame-scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.55) 100%);pointer-events:none;}';
-    doc.head.appendChild(style);
-  }
-
-  function populateSlotsFromDoc(){
-    for(let i=1;i<=8;i++){
-      const frame = siteDoc.querySelector('.frame.f'+i);
-      if(!frame) continue;
-      const span = frame.querySelector('span');
-      const captionInput = document.getElementById('caption'+i);
-      if(captionInput && span && span.textContent.trim()) captionInput.value = span.textContent.trim();
-      const existingImg = frame.querySelector('img.frame-photo');
-      const thumb = document.getElementById('thumb'+i);
-      if(existingImg && thumb){ thumb.src = existingImg.getAttribute('src'); thumb.style.display = 'block'; }
-    }
-    const logoImg = siteDoc.querySelector('.brand img');
-    if(logoImg){
-      const logoThumb = document.getElementById('logoThumb');
-      logoThumb.src = logoImg.getAttribute('src');
-      logoThumb.style.display = 'block';
-    }
-  }
-
-  function handlePhotoUpload(slot, file){
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = function(){
-      pendingPhotos[slot] = reader.result;
-      const thumb = document.getElementById('thumb'+slot);
-      thumb.src = reader.result;
-      thumb.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function handleLogoUpload(file){
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = function(){
-      pendingLogo = reader.result;
-      const thumb = document.getElementById('logoThumb');
-      thumb.src = reader.result;
-      thumb.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function applyChangesToDoc(){
-    for(let i=1;i<=8;i++){
-      const frame = siteDoc.querySelector('.frame.f'+i);
-      if(!frame) continue;
-      const span = frame.querySelector('span');
-      const captionInput = document.getElementById('caption'+i);
-      if(captionInput && span) span.textContent = captionInput.value;
-      if(pendingPhotos[i]){
-        let img = frame.querySelector('img.frame-photo');
-        let scrim = frame.querySelector('.frame-scrim');
-        if(!img){
-          img = siteDoc.createElement('img');
-          img.className = 'frame-photo';
-          frame.insertBefore(img, span);
-        }
-        img.setAttribute('src', pendingPhotos[i]);
-        img.setAttribute('alt', captionInput ? captionInput.value : '');
-        if(!scrim){
-          scrim = siteDoc.createElement('div');
-          scrim.className = 'frame-scrim';
-          frame.insertBefore(scrim, span);
-        }
-      }
-    }
-    if(pendingLogo){
-      siteDoc.querySelectorAll('.brand img, .hero-logo-wrap img').forEach(function(el){
-        el.setAttribute('src', pendingLogo);
-      });
-    }
-  }
-
-  function restoreGhSettings(){
-    const owner = localStorage.getItem('gh_owner');
-    const repo = localStorage.getItem('gh_repo');
-    const branch = localStorage.getItem('gh_branch');
-    const path = localStorage.getItem('gh_path');
-    const token = localStorage.getItem('gh_token');
-    if(owner) document.getElementById('ghOwner').value = owner;
-    if(repo) document.getElementById('ghRepo').value = repo;
-    if(branch) document.getElementById('ghBranch').value = branch;
-    if(path) document.getElementById('ghPath').value = path;
-    if(token){ document.getElementById('ghToken').value = token; document.getElementById('rememberToken').checked = true; }
-  }
-
-  function utf8ToB64(str){
-    return btoa(unescape(encodeURIComponent(str)));
-  }
-
-  async function publishToGitHub(){
-    const owner = document.getElementById('ghOwner').value.trim();
-    const repo = document.getElementById('ghRepo').value.trim();
-    const branch = document.getElementById('ghBranch').value.trim() || 'main';
-    const path = document.getElementById('ghPath').value.trim() || 'index.html';
-    const token = document.getElementById('ghToken').value.trim();
-    const statusEl = document.getElementById('ghStatus');
-    const remember = document.getElementById('rememberToken').checked;
-
-    statusEl.style.display = 'block';
-
-    if(!owner || !repo || !token){
-      statusEl.textContent = 'Please fill in repository owner, name, and token.';
-      statusEl.className = 'status warn';
-      return;
-    }
-    if(!siteDoc){
-      statusEl.textContent = 'Load the website first before publishing.';
-      statusEl.className = 'status warn';
-      return;
-    }
-
-    localStorage.setItem('gh_owner', owner);
-    localStorage.setItem('gh_repo', repo);
-    localStorage.setItem('gh_branch', branch);
-    localStorage.setItem('gh_path', path);
-    if(remember){ localStorage.setItem('gh_token', token); } else { localStorage.removeItem('gh_token'); }
-
-    applyChangesToDoc();
-    const htmlStr = '<!DOCTYPE html>\n' + siteDoc.documentElement.outerHTML;
-
-    statusEl.textContent = 'Publishing… contacting GitHub';
-    statusEl.className = 'status';
-
-    try{
-      const getRes = await fetch('https://api.github.com/repos/' + owner + '/' + repo + '/contents/' + path + '?ref=' + branch);
-      if(!getRes.ok) throw new Error('Could not find that file — check the username, repo name, branch and path.');
-      const getData = await getRes.json();
-      const sha = getData.sha;
-
-      const putRes = await fetch('https://api.github.com/repos/' + owner + '/' + repo + '/contents/' + path, {
-        method: 'PUT',
-        headers: {
-          'Authorization': 'Bearer ' + token,
-          'Accept': 'application/vnd.github+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: 'Update site via admin panel',
-          content: utf8ToB64(htmlStr),
-          sha: sha,
-          branch: branch
-        })
-      });
-      if(!putRes.ok){
-        const errData = await putRes.json().catch(function(){ return {}; });
-        throw new Error(errData.message || 'GitHub rejected the update — check the token has Contents: Read and write permission on this repo.');
-      }
-      statusEl.textContent = 'Published! GitHub Pages usually takes 30–60 seconds to update the live site.';
-      statusEl.className = 'status ok';
-    } catch(e){
-      statusEl.textContent = 'Publish failed: ' + e.message;
-      statusEl.className = 'status warn';
-    }
-  }
-
-  function generateAndDownload(){
-    if(!siteDoc) return;
-    applyChangesToDoc();
-    const htmlStr = '<!DOCTYPE html>\n' + siteDoc.documentElement.outerHTML;
-    const blob = new Blob([htmlStr], { type:'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'index.html';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    document.getElementById('downloadNote').style.display = 'block';
-  }
+// PUBLIC browser configuration only. Replace with your Supabase Project URL and sb_publishable_... key (or legacy anon key).
+const SUPABASE_URL = 'https://twdrvlmlpglkbrntttsk.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_sCEq5gZ6qqu3K982Gqo8ug_3tJqYUKE';
+const T={
+ en:{workspace:'ADMIN WORKSPACE',headline:'One platform.<br>Two businesses.',intro:'Manage BHARATEE DIGITAL SERVICE and BHARATEE GRAPHIX from one secure workspace.',digitalTag:'Cyber Café · Digital Services',graphixTag:'Photography · Videography · Albums',preserve:'Your existing website content and branding remain unchanged.',access:'OWNER & STAFF ACCESS',signin:'Sign in',signinSub:'Use the email address invited to your business workspace.',email:'Email address',password:'Password',signinBtn:'Sign in securely →',forgot:'Forgot password?',inviteOnly:'Access is invitation-only. Public registration is disabled.',reset:'Reset your password',resetSub:'Enter your email and we will send a password reset link.',sendReset:'Send reset link',back:'Back to login',newPass:'Choose a new password',newPassSub:'Use at least 10 characters.',confirm:'Confirm password',savePass:'Save new password',overview:'WORKSPACE OVERVIEW',choose:'Choose a business to manage its operations.',logout:'Sign out',yourBusinesses:'Your businesses',assignedOnly:'ONLY ASSIGNED BUSINESSES ARE SHOWN',selected:'SELECTED WORKSPACE',changeBusiness:'Change business',customers:'Customers',customersSub:'Customer directory and enquiry history.',orders:'Orders & bookings',ordersSub:'Counter jobs, studio enquiries and event bookings.',finance:'Income & expenses',financeSub:'Receipts, refunds, expenses and cashbook.',cms:'Website CMS',cmsSub:'Manage public content, services, prices and gallery.',next:'NEXT BUILD',staged:'Secure sign-in and business access are connected. Business modules will be enabled in staged releases.',private:'PRIVATE BUSINESS WORKSPACE'},
+ hi:{workspace:'एडमिन वर्कस्पेस',headline:'एक प्लेटफॉर्म।<br>दो व्यवसाय।',intro:'BHARATEE DIGITAL SERVICE और BHARATEE GRAPHIX को एक सुरक्षित वर्कस्पेस से मैनेज करें।',digitalTag:'साइबर कैफे · डिजिटल सेवाएँ',graphixTag:'फोटोग्राफी · वीडियोग्राफी · एल्बम',preserve:'आपकी मौजूदा वेबसाइट की सामग्री और ब्रांडिंग अपरिवर्तित रहेगी।',access:'ओनर और स्टाफ एक्सेस',signin:'लॉग इन',signinSub:'अपने आमंत्रित बिज़नेस अकाउंट के ईमेल से लॉग इन करें।',email:'ईमेल पता',password:'पासवर्ड',signinBtn:'सुरक्षित लॉग इन →',forgot:'पासवर्ड भूल गए?',inviteOnly:'एक्सेस केवल आमंत्रण से मिलेगा। सार्वजनिक रजिस्ट्रेशन बंद है।',reset:'पासवर्ड रीसेट करें',resetSub:'अपना ईमेल दर्ज करें। रीसेट लिंक भेजा जाएगा।',sendReset:'रीसेट लिंक भेजें',back:'लॉग इन पर वापस जाएँ',newPass:'नया पासवर्ड चुनें',newPassSub:'कम से कम 10 अक्षर रखें।',confirm:'पासवर्ड की पुष्टि करें',savePass:'नया पासवर्ड सेव करें',overview:'वर्कस्पेस ओवरव्यू',choose:'काम मैनेज करने के लिए एक बिज़नेस चुनें।',logout:'लॉग आउट',yourBusinesses:'आपके व्यवसाय',assignedOnly:'केवल असाइन किए गए व्यवसाय दिखेंगे',selected:'चुना गया वर्कस्पेस',changeBusiness:'व्यवसाय बदलें',customers:'ग्राहक',customersSub:'ग्राहक सूची और पूछताछ का इतिहास।',orders:'ऑर्डर और बुकिंग',ordersSub:'काउंटर जॉब, स्टूडियो पूछताछ और इवेंट बुकिंग।',finance:'आय और खर्च',financeSub:'रसीद, रिफंड, खर्च और कैशबुक।',cms:'वेबसाइट CMS',cmsSub:'वेबसाइट कंटेंट, सेवाएँ, कीमतें और गैलरी।',next:'अगले चरण में',staged:'सुरक्षित लॉग इन और बिज़नेस एक्सेस जुड़ चुके हैं। बाकी मॉड्यूल चरणों में उपलब्ध होंगे।',private:'निजी बिज़नेस वर्कस्पेस'},
+ or:{workspace:'ଆଡମିନ୍ ୱର୍କସ୍ପେସ୍',headline:'ଗୋଟିଏ ପ୍ଲାଟଫର୍ମ।<br>ଦୁଇଟି ବ୍ୟବସାୟ।',intro:'BHARATEE DIGITAL SERVICE ଏବଂ BHARATEE GRAPHIX କୁ ଗୋଟିଏ ସୁରକ୍ଷିତ ୱର୍କସ୍ପେସ୍ ରୁ ପରିଚାଳନା କରନ୍ତୁ।',digitalTag:'ସାଇବର କାଫେ · ଡିଜିଟାଲ୍ ସେବା',graphixTag:'ଫଟୋଗ୍ରାଫି · ଭିଡିଓଗ୍ରାଫି · ଆଲବମ୍',preserve:'ଆପଣଙ୍କର ବର୍ତ୍ତମାନର ୱେବସାଇଟ୍ ବିଷୟବସ୍ତୁ ଅପରିବର୍ତ୍ତିତ ରହିବ।',access:'ମାଲିକ ଏବଂ କର୍ମଚାରୀ ପ୍ରବେଶ',signin:'ଲଗ୍ ଇନ୍',signinSub:'ଆମନ୍ତ୍ରଣ ହୋଇଥିବା ବ୍ୟବସାୟ ଇମେଲ୍ ବ୍ୟବହାର କରନ୍ତୁ।',email:'ଇମେଲ୍ ଠିକଣା',password:'ପାସୱାର୍ଡ',signinBtn:'ସୁରକ୍ଷିତ ଲଗ୍ ଇନ୍ →',forgot:'ପାସୱାର୍ଡ ଭୁଲିଗଲେ?',inviteOnly:'ପ୍ରବେଶ କେବଳ ଆମନ୍ତ୍ରଣ ମାଧ୍ୟମରେ। ସାର୍ବଜନୀନ ରେଜିଷ୍ଟ୍ରେସନ୍ ବନ୍ଦ।',reset:'ପାସୱାର୍ଡ ପୁନଃସେଟ୍ କରନ୍ତୁ',resetSub:'ଆପଣଙ୍କ ଇମେଲ୍ ଦିଅନ୍ତୁ। ପୁନଃସେଟ୍ ଲିଙ୍କ୍ ପଠାଯିବ।',sendReset:'ରିସେଟ୍ ଲିଙ୍କ୍ ପଠାନ୍ତୁ',back:'ଲଗ୍ ଇନ୍ କୁ ଫେରନ୍ତୁ',newPass:'ନୂଆ ପାସୱାର୍ଡ ବାଛନ୍ତୁ',newPassSub:'ଅତି କମରେ ୧୦ଟି ଅକ୍ଷର ବ୍ୟବହାର କରନ୍ତୁ।',confirm:'ପାସୱାର୍ଡ ନିଶ୍ଚିତ କରନ୍ତୁ',savePass:'ନୂଆ ପାସୱାର୍ଡ ସେଭ୍ କରନ୍ତୁ',overview:'ୱର୍କସ୍ପେସ୍ ସାରାଂଶ',choose:'ପରିଚାଳନା ପାଇଁ ଗୋଟିଏ ବ୍ୟବସାୟ ବାଛନ୍ତୁ।',logout:'ଲଗ୍ ଆଉଟ୍',yourBusinesses:'ଆପଣଙ୍କ ବ୍ୟବସାୟ',assignedOnly:'କେବଳ ଅନୁମତି ଥିବା ବ୍ୟବସାୟ',selected:'ଚୟନିତ ୱର୍କସ୍ପେସ୍',changeBusiness:'ବ୍ୟବସାୟ ବଦଳାନ୍ତୁ',customers:'ଗ୍ରାହକ',customersSub:'ଗ୍ରାହକ ତାଲିକା ଏବଂ ପଚରାଉଚରା ଇତିହାସ।',orders:'ଅର୍ଡର୍ ଏବଂ ବୁକିଂ',ordersSub:'କାଉଣ୍ଟର କାମ, ଷ୍ଟୁଡିଓ ଏବଂ ଇଭେଣ୍ଟ ବୁକିଂ।',finance:'ଆୟ ଏବଂ ଖର୍ଚ୍ଚ',financeSub:'ରସିଦ, ରିଫଣ୍ଡ, ଖର୍ଚ୍ଚ ଏବଂ କ୍ୟାଶବୁକ୍।',cms:'ୱେବସାଇଟ୍ CMS',cmsSub:'ୱେବସାଇଟ୍ ବିଷୟବସ୍ତୁ, ସେବା, ମୂଲ୍ୟ ଏବଂ ଗ୍ୟାଲେରୀ।',next:'ପରବର୍ତ୍ତୀ ପର୍ଯ୍ୟାୟ',staged:'ସୁରକ୍ଷିତ ଲଗ୍ ଇନ୍ ଏବଂ ବ୍ୟବସାୟ ପ୍ରବେଶ ସଂଯୁକ୍ତ। ଅନ୍ୟ ମଡ୍ୟୁଲ୍ ପର୍ଯ୍ୟାୟକ୍ରମେ ଆସିବ।',private:'ବ୍ୟକ୍ତିଗତ ବ୍ୟବସାୟ ୱର୍କସ୍ପେସ୍'}
+};
+let lang='en',db=null,profile=null,members=[],selected=null;
+const $=id=>document.getElementById(id);
+function msg(id,text,type='error'){const e=$(id);e.textContent=text;e.className='message '+type;}
+function clear(id){const e=$(id);e.textContent='';e.className='message hidden';}
+function view(id){['loginView','recoveryView','newPasswordView','dashboardView'].forEach(x=>$(x).classList.toggle('hidden',x!==id));}
+function translate(code){lang=T[code]?code:'en';document.documentElement.lang=lang;document.querySelectorAll('[data-k]').forEach(el=>{const k=el.dataset.k;el.innerHTML=T[lang][k]||T.en[k]||k;});$('lang').value=lang;}
+function businessName(b){return (b.name_i18n&& (b.name_i18n[lang]||b.name_i18n.en))||(b.code==='graphix'?'BHARATEE GRAPHIX':'BHARATEE DIGITAL SERVICE');}
+function renderBusinesses(){const grid=$('businessGrid');grid.replaceChildren();members.forEach(m=>{const b=m.business_units;if(!b||!b.is_active)return;const btn=document.createElement('button');btn.className='business';btn.type='button';btn.setAttribute('aria-pressed',String(selected&&selected.business_id===m.business_id));const icon=document.createElement('span');icon.className='badge'+(b.code==='graphix'?' orange':'');icon.textContent=b.code==='graphix'?'BG':'DS';const copy=document.createElement('span');const name=document.createElement('span');name.className='bname';name.textContent=businessName(b);const role=document.createElement('span');role.className='role';role.textContent=m.role.replaceAll('_',' ')+(b.code==='graphix'?' · Photography Studio':' · Cyber Café');copy.append(name,role);const arrow=document.createElement('span');arrow.className='arrow';arrow.textContent='→';btn.append(icon,copy,arrow);btn.onclick=()=>chooseBusiness(m);grid.append(btn);});}
+function chooseBusiness(m){selected=m;$('selectedName').textContent=businessName(m.business_units);$('selectedRole').textContent='Access role: '+m.role.replaceAll('_',' ');$('selectedPanel').classList.remove('hidden');renderBusinesses();}
+async function loadWorkspace(user){const [p,m]=await Promise.all([db.from('profiles').select('id,full_name,preferred_locale,is_active').eq('id',user.id).maybeSingle(),db.from('business_members').select('business_id,role,is_active,business_units(id,code,name_i18n,is_active)').eq('user_id',user.id).eq('is_active',true)]);if(p.error)throw p.error;if(m.error)throw m.error;if(!p.data||!p.data.is_active)throw new Error('Your profile is inactive. Contact the owner.');profile=p.data;members=(m.data||[]).filter(x=>x.business_units&&x.business_units.is_active);if(!members.length)throw new Error('No active business access is assigned to this account. Ask the owner to assign your role.');translate(profile.preferred_locale||lang);$('welcome').textContent='Welcome, '+(profile.full_name||user.email||'User');selected=null;$('selectedPanel').classList.add('hidden');renderBusinesses();view('dashboardView');if(members.length===1)chooseBusiness(members[0]);}
+async function handleSession(session){if(!session){view('loginView');selected=null;members=[];profile=null;return;}try{await loadWorkspace(session.user);}catch(e){console.error(e);await db.auth.signOut();view('loginView');msg('loginMessage',e.message||'Workspace access failed.');}}
+async function start(){translate('en');$('lang').onchange=async e=>{translate(e.target.value);if(profile&&db){const {error}=await db.from('profiles').update({preferred_locale:lang}).eq('id',profile.id);if(error)msg('dashMessage','Language changed for this session, but could not be saved: '+error.message);else profile.preferred_locale=lang;}renderBusinesses();if(selected)$('selectedName').textContent=businessName(selected.business_units);};
+if(!SUPABASE_URL.startsWith('https://')||SUPABASE_URL.includes('YOUR_')||SUPABASE_PUBLISHABLE_KEY.includes('YOUR_')||!window.supabase){$('configWarning').classList.remove('hidden');$('loginForm').querySelectorAll('input,button').forEach(x=>x.disabled=true);return;}
+db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true}});
+$('loginForm').onsubmit=async e=>{e.preventDefault();clear('loginMessage');const email=$('email').value.trim(),password=$('password').value;if(!email||!password)return msg('loginMessage','Enter email and password.');$('loginButton').disabled=true;const {error}=await db.auth.signInWithPassword({email,password});$('loginButton').disabled=false;if(error)msg('loginMessage',error.message);};
+$('forgotBtn').onclick=()=>{$('recoveryEmail').value=$('email').value.trim();clear('recoveryMessage');view('recoveryView');};$('backBtn').onclick=()=>view('loginView');
+$('recoveryForm').onsubmit=async e=>{e.preventDefault();clear('recoveryMessage');$('sendReset').disabled=true;const {error}=await db.auth.resetPasswordForEmail($('recoveryEmail').value.trim(),{redirectTo:location.href.split('#')[0]});$('sendReset').disabled=false;if(error)msg('recoveryMessage',error.message);else msg('recoveryMessage','If an account exists for this address, a reset email has been sent.','success');};
+$('newPasswordForm').onsubmit=async e=>{e.preventDefault();clear('newPasswordMessage');const p=$('newPassword').value,c=$('confirmPassword').value;if(p.length<10)return msg('newPasswordMessage','Use at least 10 characters.');if(p!==c)return msg('newPasswordMessage','Passwords do not match.');$('savePass').disabled=true;const {error}=await db.auth.updateUser({password:p});$('savePass').disabled=false;if(error)msg('newPasswordMessage',error.message);else{msg('newPasswordMessage','Password updated. Loading workspace…','success');const {data}=await db.auth.getSession();if(data.session)await handleSession(data.session);}};
+$('logout').onclick=async()=>{const {error}=await db.auth.signOut();if(error)msg('dashMessage',error.message);};$('switchBusiness').onclick=()=>{$('selectedPanel').classList.add('hidden');selected=null;renderBusinesses();};
+db.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'){view('newPasswordView');return;}if(location.hash.includes('type=recovery'))return;setTimeout(()=>handleSession(session),0);});
+const {data,error}=await db.auth.getSession();if(error)msg('loginMessage',error.message);if(location.hash.includes('type=recovery'))view('newPasswordView');else if(data.session)await handleSession(data.session);
+}
+document.addEventListener('DOMContentLoaded',start);
 </script>
-
-</body>
-</html>
+<script src="./accounting-dashboard.js"></script>
+<script src="./finance-management.js"></script>
+<script src="./customer-management.js"></script>
+<script src="./wedding-booking.js"></script>
+<script src="./cyber-cafe-management.js"></script>
+<script src="./website-cms.js"></script>
+</body></html>
