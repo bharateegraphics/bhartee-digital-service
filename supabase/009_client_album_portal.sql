@@ -439,7 +439,11 @@ begin
     and a.customer_id = c.id
   for update of a;
 
-  if not found or not v_access.is_active or v_access.phone_last10 <> v_phone_last10 then
+  if not found then
+    return jsonb_build_object('ok',false,'message','Details could not be verified. Check your mobile number, Project ID and PIN.');
+  end if;
+
+  if not v_access.is_active or v_access.phone_last10 <> v_phone_last10 then
     return jsonb_build_object('ok',false,'message','Details could not be verified. Check your mobile number, Project ID and PIN.');
   end if;
 
