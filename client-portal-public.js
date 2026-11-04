@@ -10,7 +10,7 @@
   const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
   let token = sessionStorage.getItem(TOKEN_KEY) || '';
   let project = null;
-  function message(text,error=false){const n=$('portalMessage');n.textContent=text||'';n.hidden=!text;n.className='notice'+(error?' error':'');}
+  function message(text,error=false){['portalMessage','projectNotice'].forEach(id=>{const n=$(id);if(n){n.textContent=text||'';n.hidden=!text;n.className='notice'+(error?' error':'');}});}
   function showLogin(){ $('loginPanel').hidden=false; $('projectPanel').hidden=true; }
   function showProject(){ $('loginPanel').hidden=true; $('projectPanel').hidden=false; }
   function validDrive(url){try{const u=new URL(url);return u.protocol==='https:'&&['drive.google.com','docs.google.com'].includes(u.hostname.toLowerCase());}catch(_){return false;}}
